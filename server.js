@@ -10,6 +10,9 @@ const port = process.env.PORT || 3000;
 // Middleware to parse form data
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Serve static files from the 'public' directory (for CSS)
+app.use(express.static('public'));
+
 // Connect to MongoDB Atlas using the .env variable
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
@@ -33,73 +36,6 @@ const User = mongoose.model('User', userSchema);
 
 // Password Validation Regex (8 characters, 2 digits, 1 symbol, case-sensitive)
 const passwordValidationRegex = /^(?=(.*[a-z]){1})(?=(.*[A-Z]){1})(?=(.*\d){2})(?=(.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]){1}).{8,}$/;
-
-// Common CSS for all pages
-const commonCSS = `
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .container {
-      background: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      width: 350px;
-      text-align: center;
-    }
-    h2 {
-      margin-bottom: 20px;
-      color: #333;
-    }
-    input {
-      padding: 10px;
-      margin: 8px 0;
-      width: 100%;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      padding: 12px;
-      border: none;
-      width: 100%;
-      cursor: pointer;
-      font-size: 16px;
-      border-radius: 4px;
-      margin-top: 10px;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    .message {
-      background-color: #4CAF50;
-      color: white;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
-    .link {
-      margin-top: 10px;
-      font-size: 14px;
-    }
-    .link a {
-      color: #007BFF;
-      text-decoration: none;
-    }
-    .link a:hover {
-      text-decoration: underline;
-    }
-  </style>
-`;
 
 // Handle Signup Request
 app.post('/signup', async (req, res) => {
@@ -128,7 +64,7 @@ app.post('/signup', async (req, res) => {
 
     res.send(`
       <html>
-        <head>${commonCSS}</head>
+        <head><link rel="stylesheet" href="/styles.css"></head>
         <body>
           <div class="container">
             <div class="message">Signup successful! Please log in now.</div>
@@ -165,7 +101,7 @@ app.post('/login', async (req, res) => {
     if (isPasswordCorrect) {
       res.send(`
         <html>
-          <head>${commonCSS}</head>
+          <head><link rel="stylesheet" href="/styles.css"></head>
           <body>
             <div class="container">
               <div class="message">Login successful! Welcome back, ${user.username}.</div>
@@ -187,7 +123,7 @@ app.post('/login', async (req, res) => {
 app.get('/', (req, res) => {
   res.send(`
     <html>
-      <head>${commonCSS}</head>
+      <head><link rel="stylesheet" href="/styles.css"></head>
       <body>
         <div class="container">
           <h2>Signup</h2>
@@ -211,7 +147,7 @@ app.get('/', (req, res) => {
 app.get('/login', (req, res) => {
   res.send(`
     <html>
-      <head>${commonCSS}</head>
+      <head><link rel="stylesheet" href="/styles.css"></head>
       <body>
         <div class="container">
           <h2>Login</h2>
