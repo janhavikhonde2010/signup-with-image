@@ -9,7 +9,7 @@ const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
-const port = process.env.PORT || 3003; // Use environment port or default to 3000
+const port = process.env.PORT || 3002; // Use environment port or default to 3000
 
 // Middleware to parse form data
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -85,8 +85,6 @@ app.post('/signup', upload.single('image'), async (req, res) => {
       <html>
         <body style="text-align:center; font-family:Arial;">
           <h2>✅ Signup Successful!</h2>
-          <p>Your account has been created. Please log in now:</p>
-          <a href="/login">Go to Login</a>
         </body>
       </html>
     `);
@@ -97,7 +95,7 @@ app.post('/signup', upload.single('image'), async (req, res) => {
   }
 });
 
-// Handle Login Request
+// Handle Login Request with Debugging
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -105,10 +103,16 @@ app.post('/login', async (req, res) => {
     const user = await User.findOne({ email: new RegExp('^' + email + '$', 'i') });
 
     if (!user) {
+      console.log('User not found:', email);
       return res.status(400).send('❌ User not found');
     }
 
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    // Debugging: Log the entered password and stored hashed password
+    console.log('Entered Password:', password);
+    console.log('Stored Hashed Password:', user.password);
+
+    // Trim whitespace and compare passwords
+    const isPasswordCorrect = await bcrypt.compare(password.trim(), user.password.trim());
 
     if (isPasswordCorrect) {
       res.send(`
@@ -121,6 +125,7 @@ app.post('/login', async (req, res) => {
         </html>
       `);
     } else {
+      console.log('Invalid password for:', email);
       res.status(400).send('❌ Invalid password');
     }
 
@@ -137,5 +142,5 @@ app.get('/', (req, res) => {
 
 // Start Server
 app.listen(port, () => {
-  console.log(`🚀 Server is running on http://localhost:3003}`);
+  console.log(`🚀 Server is running on http://localhost:3002}`);
 });
