@@ -1,16 +1,21 @@
 {
-    "version": 2,
-    "builds": [
-      {
-        "src": "index.js",
-        "use": "@vercel/node"
-      }
-    ],
-    "routes": [
-      {
-        "src": "/(.*)",
-        "dest": "/index.js"
-      }
-    ]
+  "version": 2,
+  "builds": [
+    {
+      "src": "index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "index.js"
+    }
+  ],
+  "env": {
+    "MONGO_URI":" mongodb+srv://janhavikhonde20:Oz9YHdpYTD99xrQx@mysignupapp.q9h6j.mongodb.net/?retryWrites=true&w=majority&appName=mySignupApp",
+    "CLOUD_NAME": "dpfr2llzl",
+    "CLOUD_API_KEY": "754626748233451",
+    "CLOUD_API_SECRET": "l4as61mKvur0E8UlXRdvvd0x8Dg@cloud_api_secret"
   }
-  
+}
