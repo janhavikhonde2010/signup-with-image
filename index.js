@@ -4,14 +4,34 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
+const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
-const port = process.env.PORT || 3000; // Use environment port or default to 3000
+const port = process.env.PORT || 3003; // Use environment port or default to 3000
 
 // Middleware to parse form data
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Connect to MongoDB Atlas using .env variable
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET
+});
+
+// Configure Multer Storage for Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'user_images', // Folder name in Cloudinary
+    allowed_formats: ['jpg', 'png', 'jpeg']
+  }
+});
+const upload = multer({ storage: storage });
+
+// Connect to MongoDB Atlas
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -25,7 +45,8 @@ const userSchema = new mongoose.Schema({
   password: String,
   email: String,
   phone: String,
-  education: String
+  education: String,
+  imageUrl: String // Store Cloudinary Image URL
 });
 
 const User = mongoose.model('User', userSchema);
@@ -33,8 +54,8 @@ const User = mongoose.model('User', userSchema);
 // Password Validation Regex (8 characters, 2 digits, 1 symbol, case-sensitive)
 const passwordValidationRegex = /^(?=(.*[a-z]){1})(?=(.*[A-Z]){1})(?=(.*\d){2})(?=(.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]){1}).{8,}$/;
 
-// Handle Signup Request
-app.post('/signup', async (req, res) => {
+// Handle Signup Request with Image Upload
+app.post('/signup', upload.single('image'), async (req, res) => {
   const { username, password, confirmPassword, email, phone, education } = req.body;
 
   if (password !== confirmPassword) {
@@ -54,7 +75,8 @@ app.post('/signup', async (req, res) => {
       password: hashedPassword,
       email,
       phone,
-      education
+      education,
+      imageUrl: req.file?.secure_url // Store Cloudinary Image URL
     });
 
     await newUser.save();
@@ -71,7 +93,7 @@ app.post('/signup', async (req, res) => {
 
   } catch (err) {
     console.error('❌ Error during signup:', err);
-    res.status(500).send('❌ Error hashing password or saving user');
+    res.status(500).send('❌ Error saving user');
   }
 });
 
@@ -94,6 +116,7 @@ app.post('/login', async (req, res) => {
           <body style="text-align:center; font-family:Arial;">
             <h2>✅ Login Successful!</h2>
             <p>Welcome back, ${user.username}!</p>
+            <img src="${user.imageUrl}" alt="Profile Picture" width="100">
           </body>
         </html>
       `);
@@ -107,45 +130,12 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Serve Login Page
-app.get('/login', (req, res) => {
-  res.send(`
-    <html>
-      <body style="text-align:center; font-family:Arial;">
-        <h2>Login</h2>
-        <form action="/login" method="POST">
-          <input type="email" name="email" placeholder="Email" required><br>
-          <input type="password" name="password" placeholder="Password" required><br>
-          <button type="submit">Login</button>
-        </form>
-        <p>Don't have an account? <a href="/">Sign up here</a></p>
-      </body>
-    </html>
-  `);
-});
-
 // Serve Signup Page
 app.get('/', (req, res) => {
-  res.send(`
-    <html>
-      <body style="text-align:center; font-family:Arial;">
-        <h2>Signup</h2>
-        <form action="/signup" method="POST">
-          <input type="text" name="username" placeholder="Username" required><br>
-          <input type="email" name="email" placeholder="Email" required><br>
-          <input type="password" name="password" placeholder="Password" required><br>
-          <input type="password" name="confirmPassword" placeholder="Confirm Password" required><br>
-          <input type="text" name="phone" placeholder="Phone" required><br>
-          <input type="text" name="education" placeholder="Education" required><br>
-          <button type="submit">Sign Up</button>
-        </form>
-        <p>Already have an account? <a href="/login">Login here</a></p>
-      </body>
-    </html>
-  `);
+  res.sendFile(__dirname + '/index.html');
 });
 
 // Start Server
 app.listen(port, () => {
-  console.log(`🚀 Server is running on http://localhost:${port}`);
+  console.log(`🚀 Server is running on http://localhost:3003}`);
 });
