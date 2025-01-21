@@ -7,9 +7,10 @@ const bcrypt = require('bcrypt');
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const path = require('path');
 
 const app = express();
-const port = process.env.PORT || 3002; // Use environment port or default to 3000
+const port = process.env.PORT || 3002; // Use environment port or default to 3002
 
 // Middleware to parse form data
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -32,18 +33,15 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage: storage });
 
 // Connect to MongoDB Atlas
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log("✅ MongoDB Atlas connected successfully!"))
-.catch(err => console.error("❌ DB Connection Error:", err));
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB Atlas connected successfully!"))
+  .catch(err => console.error("❌ DB Connection Error:", err));
 
 // Define User Schema and Model
 const userSchema = new mongoose.Schema({
   username: String,
   password: String,
-  email: String,
+  email: { type: String, unique: true }, // Ensure email is unique
   phone: String,
   education: String,
   imageUrl: String // Store Cloudinary Image URL
@@ -67,6 +65,12 @@ app.post('/signup', upload.single('image'), async (req, res) => {
   }
 
   try {
+    // Check if email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).send('❌ Email already registered. Please use a different email.');
+    }
+
     // Hash password before saving
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -137,10 +141,17 @@ app.post('/login', async (req, res) => {
 
 // Serve Signup Page
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+  const filePath = path.join(__dirname, 'index.html');
+  
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('❌ index.html not found:', err);
+      res.status(404).send('❌ index.html not found');
+    }
+  });
 });
 
 // Start Server
 app.listen(port, () => {
-  console.log(`🚀 Server is running on http://localhost:3002}`);
+  console.log(`🚀 Server is running on http://localhost:${port}`);
 });
